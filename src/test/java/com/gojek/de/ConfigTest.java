@@ -189,7 +189,7 @@ public class ConfigTest {
 
         assertFalse(config.has("invalid_key"));
     }
-    
+
     @Test
     public void shouldGiveTrueIfKeyDoesExist() throws Exception {
         SystemEnv.set("key", "value");
