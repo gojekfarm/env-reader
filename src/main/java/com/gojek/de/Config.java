@@ -2,6 +2,8 @@ package com.gojek.de;
 
 import com.gojek.de.exception.ConfigException;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,40 +13,35 @@ import java.util.Map;
 public class Config {
 
     private final ArrayList<IConfig> configs =new ArrayList<>();
+    private static final Logger logger = LoggerFactory.getLogger(FileConfig.class);
 
-    public Config(String fileName) {
+    public Config(String ...fileNames) {
         configs.add(new SystemConfig());
-        configs.add(new FileConfig(fileName));
-    }
-
-    public Config(String fileName, String defaultsFileName) {
-        configs.add(new SystemConfig());
-        configs.add(new FileConfig(fileName));
-        configs.add(new FileConfig(defaultsFileName));
-    }
-
-    public Config(){
-        configs.add(new SystemConfig());
+        for (String fileName : fileNames) {
+            try {
+                configs.add(new FileConfig(fileName));
+            } catch (RuntimeException e) {
+                logger.warn(e.getMessage());
+            }
+        }
     }
 
     public boolean has(String key) {
-        return get(key, null) != null;
+        for (IConfig config: configs) {
+            String value = config.get(key);
+            if(!StringUtils.isBlank(value))
+                return true;
+        }
+        return false;
     }
 
     public String get(String key) {
-        String ret = get(key, null);
-        if (ret == null)
-            throw new ConfigException("No config found");
-        return ret;
-    }
-
-    public String get(String key, String defaultValue) {
         for (IConfig config: configs) {
             String value = config.get(key);
             if(!StringUtils.isBlank(value))
                 return value;
         }
-        return defaultValue;
+        throw new ConfigException(key + " config not set");
     }
 
 
@@ -62,38 +59,22 @@ public class Config {
     }
 
     public int getInt(String key) {
+        String value = null;
         try {
-            String value = get(key);
+            value = get(key);
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new ConfigException(String.format("Config value is not a number"));
-        }
-    }
-
-    public int getInt(String key, Integer defaultValue) {
-        try {
-            String value = get(key, String.valueOf(defaultValue));
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            throw new ConfigException(String.format("Config value is not a number"));
+            throw new ConfigException(value + " is not an int");
         }
     }
 
     public long getLong(String key) {
+        String value = null;
         try {
-            String value = get(key);
+            value = get(key);
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
-            throw new ConfigException(String.format("Config value is not a number"));
-        }
-    }
-
-    public long getLong(String key, long defaultValue) {
-        try {
-            String value = get(key, String.valueOf(defaultValue));
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            throw new ConfigException(String.format("Config value is not a number"));
+            throw new ConfigException(String.format(value + " is not a long"));
         }
     }
 }

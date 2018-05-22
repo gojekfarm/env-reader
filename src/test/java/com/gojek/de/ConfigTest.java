@@ -13,189 +13,109 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConfigTest {
+
+    private Config config;
+
     @Before
     public void before() throws Exception {
         SystemEnv.reset();
+        SystemEnv.set("ENV_ONLY", "yes");
+        SystemEnv.set("DEFINED_EVERYWHERE", "env");
+
+        config = ConfigFactory.load("application.properties", "default.properties");
     }
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
     @Test
+    public void getsFromEnv() throws Exception {
+        assertEquals("yes", config.get("ENV_ONLY"));
+    }
+
+    @Test
     public void shouldReadFromEnvironmentConfigFirst() throws Exception {
-        SystemEnv.set("TEST", "123");
-
-        Config config = new Config("application.properties");
-
-        assertEquals("123", config.get("TEST"));
+        assertEquals("env", config.get("DEFINED_EVERYWHERE"));
     }
 
     @Test
     public void shouldReadFromAppConfigWhenNotPresentInEnvironmentConfig() throws Exception {
-        Config config = new Config("application.properties");
-
-        assertEquals("application.properties", config.get("TEST"));
+        assertEquals("yes", config.get("APPCONFIG_ONLY"));
     }
 
     @Test
-    public void shouldGiveNullValueWhenEnvironmentConfigAndAppConfigDoesNotHaveKey() throws Exception {
-        SystemEnv.set("TEST","123");
-
-        Config config = new Config("application.properties");
-
-        assertEquals(null, config.get("invalid", null));
+    public void shouldReadFromDefaultConfigWhenNotPresentInOtherPlaces() throws Exception {
+        assertEquals("yes", config.get("DEFAULT_CONFIG_ONLY"));
     }
 
     @Test
-    public void shouldThrowExceptionWhenEnvironmentConfigAndAppConfigDoesNotHaveKey() throws Exception {
+    public void filePriority() {
+        assertEquals("application.properties", config.get("FILECONFIG_ONLY"));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenConfigIsNotPresent() throws Exception {
         expectedException.expect(ConfigException.class);
-        expectedException.expectMessage("No config found");
+        expectedException.expectMessage("NOT_DEFINED config not set");
 
-        SystemEnv.set("TEST","123");
-
-        Config config = new Config("application.properties");
-
-        config.get("invalid");
+        config.get("NOT_DEFINED");
     }
 
     @Test
-    public void shouldReturnValueFromEnvironmentIfAppConfigFileIsMissing() throws Exception {
-        SystemEnv.set("TEST","123");
-
-        Config config = new Config("missing_file.conf");
-
-        assertEquals("123", config.get("TEST"));
+    public void shouldGiveIntValue() {
+        assertEquals(234, config.getInt("INT"));
     }
 
     @Test
-    public void shouldReturnNullValueIfAppConfigIsMissingAndKeyNotPresentInEnvironment() throws Exception {
-
-        Config config = new Config("missing_file.conf");
-
-        assertEquals(null, config.get("TEST", null));
+    public void shouldGiveLongValue() {
+        assertEquals(9223372036854775807L, config.getLong("LONG"));
     }
-
     @Test
-    public void shouldThrowExceptionIfAppConfigIsMissingAndKeyNotPresentInEnvironment() throws Exception {
+    public void shouldThrowErrorForBadInt() {
         expectedException.expect(ConfigException.class);
-        expectedException.expectMessage("No config found");
-
-        Config config = new Config("missing_file.conf");
-
-        config.get("TEST");
+        expectedException.expectMessage("9238458438233829299999192828282828282 is not an int");
+        config.getInt("BAD_INT");
     }
 
     @Test
-    public void shouldReturnValueFromEnvironmentIfAppConfigFileIsInvalid() throws Exception {
-        SystemEnv.set("TEST","123");
-
-        Config config = new Config("test.txt");
-
-        assertEquals("123", config.get("TEST"));
-    }
-
-    @Test
-    public void shouldReturnNullValueIfAppConfigIsInvalidAndKeyNotPresentInEnvironment() {
-        Config config = new Config("test.txt");
-
-        assertEquals(null, config.get("invalid", null));
-    }
-
-    @Test
-    public void shouldThrowExceptionIfAppConfigIsInvalidAndKeyNotPresentInEnvironment() {
+    public void shouldThrowErrorForBadLong() {
         expectedException.expect(ConfigException.class);
-        expectedException.expectMessage("No config found");
-
-        Config config = new Config("test.txt");
-
-        assertEquals(null, config.get("invalid"));
+        expectedException.expectMessage("9223372036854775809 is not a long");
+        config.getLong("BAD_LONG");
     }
 
     @Test
-    public void shouldGetTheSystemConfigs() throws Exception {
-
-        SystemEnv.set("TEST_ONE","1234321");
-
-        Config systemConfig = new Config();
-
-        Map<String, String> original = System.getenv();
-
-        Map<String, String> expectedConfigs = systemConfig.getAll();
-        assertEquals(original.size(), expectedConfigs.size());
-        assertEquals(original,expectedConfigs);
+    public void hasGivesTrueForKeyInAnySource() {
+        assertTrue(config.has("ENV_ONLY"));
+        assertTrue(config.has("APPCONFIG_ONLY"));
+        assertTrue(config.has("DEFAULT_CONFIG_ONLY"));
     }
 
     @Test
-    public void shouldGetBothConfigs() throws Exception {
-
-        SystemEnv.set("TEST_ONE","1234321");
-
-        Config mergedConfig = new Config("application.properties");
-
-        Map<String, String> systemConfig = System.getenv();
-        Map<String, String> expectedConfigs = mergedConfig.getAll();
-
-        for (Map.Entry<String, String> systemProperty: systemConfig.entrySet()){
-            assertEquals(systemProperty.getValue(),expectedConfigs.get(systemProperty.getKey()));
-        }
-        assertEquals("application.properties", mergedConfig.get("TEST"));
+    public void hasGivesFalseForKeyNotFound() {
+        assertFalse(config.has("NOT_FOUND"));
     }
 
     @Test
-    public void shouldOverrideAppConfigFromSystemConfig() throws Exception {
-
-        SystemEnv.set("TEST","1234321");
-
-        Config mergedConfig = new Config("application.properties");
-
-        Map<String, String> expectedConfigs = mergedConfig.getAll();
-
-        assertEquals("1234321", expectedConfigs.get("TEST"));
+    public void getAllGiveUnionOfAllConfigsWithRightPrecedence() {
+        Map<String, String> map = config.getAll();
+        assertEquals("9238458438233829299999192828282828282", map.get("BAD_INT"));
+        assertEquals("yes", map.get("APPCONFIG_ONLY"));
+        assertEquals("234", map.get("INT"));
+        assertEquals("9223372036854775807", map.get("LONG"));
+        assertEquals("yes", map.get("DEFAULT_CONFIG_ONLY"));
+        assertEquals("application.properties", map.get("FILECONFIG_ONLY"));
+        assertEquals("yes", map.get("ENV_ONLY"));
+        assertEquals("env", map.get("DEFINED_EVERYWHERE"));
+        assertEquals("9223372036854775809", map.get("BAD_LONG"));
     }
 
     @Test
-    public void shouldReadIntValueFromConfig() throws Exception {
-        SystemEnv.set("INT_VALUE","123");
-
-        Config config = new Config("application.properties");
-
-        assertEquals(123, config.getInt("INT_VALUE"));
+    public void modificationToMapReturnedByGetAllDoesNotMutateOriginal() {
+        Map<String, String> map = config.getAll();
+        String oldValue = map.get("DEFINED_EVERYWHERE");
+        String newValue = oldValue + "v2";
+        map.put("DEFINED_EVERYWHERE", newValue);
+        assertEquals(oldValue, config.getAll().get("DEFINED_EVERYWHERE"));
     }
-
-    @Test
-    public void shouldThrowExceptionWhenConfigIsMissingForAnIntValueFromConfig() throws Exception {
-        expectedException.expect(ConfigException.class);
-        expectedException.expectMessage("No config found");
-
-        Config config = new Config("application.properties");
-
-        config.getInt("invalid_key");
-    }
-
-    @Test
-    public void shouldThrowExceptionWhenConfigIsNotInt() throws Exception {
-        expectedException.expect(ConfigException.class);
-        expectedException.expectMessage("Config value is not a number");
-
-        SystemEnv.set("NON_INT","abc");
-
-        Config config = new Config("application.properties");
-
-        config.getInt("NON_INT");
-    }
-    @Test
-    public void shouldGiveFalseIfKeyDoesNotExist() {
-        Config config = new Config("application.properties");
-
-        assertFalse(config.has("invalid_key"));
-    }
-
-    @Test
-    public void shouldGiveTrueIfKeyDoesExist() throws Exception {
-        SystemEnv.set("key", "value");
-        Config config = new Config("application.properties");
-
-        assertTrue(config.has("key"));
-    }
-
 }
