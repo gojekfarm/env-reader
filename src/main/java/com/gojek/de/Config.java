@@ -17,6 +17,12 @@ public class Config {
         configs.add(new FileConfig(fileName));
     }
 
+    public Config(String fileName, String defaultsFileName) {
+        configs.add(new SystemConfig());
+        configs.add(new FileConfig(fileName));
+        configs.add(new FileConfig(defaultsFileName));
+    }
+
     public Config(){
         configs.add(new SystemConfig());
     }
