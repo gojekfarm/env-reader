@@ -72,4 +72,22 @@ public class Config {
             throw new ConfigException(String.format("Config value is not a number"));
         }
     }
+
+    public long getLong(String key) {
+        try {
+            String value = get(key);
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            throw new ConfigException(String.format("Config value is not a number"));
+        }
+    }
+
+    public long getLong(String key, long defaultValue) {
+        try {
+            String value = get(key, String.valueOf(defaultValue));
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            throw new ConfigException(String.format("Config value is not a number"));
+        }
+    }
 }
