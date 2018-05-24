@@ -2,17 +2,15 @@ package com.gojek.de;
 
 import com.gojek.de.exception.ConfigException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Config {
 
-    private final ArrayList<IConfig> configs =new ArrayList<>();
+    private final ArrayList<IConfig> configs = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(FileConfig.class);
 
     public Config(String ...fileNames) {
@@ -24,6 +22,10 @@ public class Config {
                 logger.warn(e.getMessage());
             }
         }
+    }
+
+    public void remap(ModifierSet modifier) {
+            configs.add(0, new ModifierConfig(getAll(), modifier));
     }
 
     public boolean has(String key) {

@@ -1,6 +1,7 @@
 package com.gojek.de;
 
 import com.gojek.de.exception.ConfigException;
+import org.apache.commons.lang3.tuple.Triple;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -97,8 +98,20 @@ public class ConfigTest {
     }
 
     @Test
+    public void modifiers() {
+        config.remap(new ModifierSet(
+                "^KAFKA_CONSUMER_CONFIG_.*",
+                key -> String.join(".", key.replaceAll("KAFKA_CONSUMER_CONFIG_", "").toLowerCase().split("_")),
+                value -> value
+        ));
+        assertEquals(2147483647,config.getInt("auto.commit.interval.ms"));
+        assertEquals("false",config.get("enable.auto.commit"));
+    }
+
+    @Test
     public void getAllGiveUnionOfAllConfigsWithRightPrecedence() {
         Map<String, String> map = config.getAll();
+
         assertEquals("9238458438233829299999192828282828282", map.get("BAD_INT"));
         assertEquals("yes", map.get("APPCONFIG_ONLY"));
         assertEquals("234", map.get("INT"));
