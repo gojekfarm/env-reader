@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Config {
 
@@ -25,7 +26,13 @@ public class Config {
     }
 
     public void remap(ModifierSet modifier) {
-            configs.add(0, new ModifierConfig(getAll(), modifier));
+            configs.add(0, new ModifierConfig(this, modifier));
+    }
+
+    public Map<String, String> getMatching(String regex) {
+        return getAll().entrySet().stream()
+                .filter(e -> e.getKey().matches(regex))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
     }
 
     public boolean has(String key) {

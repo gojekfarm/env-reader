@@ -109,6 +109,15 @@ public class ConfigTest {
     }
 
     @Test
+    public void getMatching() {
+        assertEquals("2147483647",config.getMatching("^KAFKA_CONSUMER_CONFIG_.*")
+                .get("KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_INTERVAL_MS"));
+        assertEquals("false",config.getMatching("^KAFKA_CONSUMER_CONFIG_.*")
+                .get("KAFKA_CONSUMER_CONFIG_ENABLE_AUTO_COMMIT"));
+        assertEquals(2, config.getMatching("^KAFKA_CONSUMER_CONFIG_.*").size());
+    }
+
+    @Test
     public void getAllGiveUnionOfAllConfigsWithRightPrecedence() {
         Map<String, String> map = config.getAll();
 

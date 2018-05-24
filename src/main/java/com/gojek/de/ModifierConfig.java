@@ -8,9 +8,9 @@ public class ModifierConfig implements IConfig {
 
     private Map<String, String> configs;
 
-    public ModifierConfig(Map<String, String> source, ModifierSet modifier) {
+    public ModifierConfig(Config config, ModifierSet modifier) {
         configs = new HashMap<>();
-        Map<String, String> newConfigs = source.entrySet()
+        Map<String, String> newConfigs = config.getAll().entrySet()
                 .stream()
                 .filter(a -> a.getKey().matches(modifier.getRegex()))
                 .collect(Collectors.toMap(
