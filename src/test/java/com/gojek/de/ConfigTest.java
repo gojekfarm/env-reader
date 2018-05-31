@@ -23,7 +23,7 @@ public class ConfigTest {
         SystemEnv.set("ENV_ONLY", "yes");
         SystemEnv.set("DEFINED_EVERYWHERE", "env");
 
-        config = ConfigFactory.load("application.properties", "default.properties");
+        config = ConfigFactory.load("/application.properties", "/default.properties");
     }
 
     @Rule
