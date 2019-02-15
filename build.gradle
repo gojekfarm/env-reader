@@ -1,0 +1,24 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+}
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.jfrog.artifactory' version "4.7.1"
+}
+
+group 'com.gojek.de'
+version '0.2.3'
+
+dependencies {
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    testImplementation 'junit:junit:4.12'
+}
+
+buildscript.repositories.each { repositories.add(it) }
