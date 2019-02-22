@@ -14,7 +14,7 @@ plugins {
 }
 
 group 'com.gojek'
-version '0.2.4'
+version '0.2.5'
 
 dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
@@ -30,7 +30,6 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier 'sources'
     from sourceSets.main.allSource
 }
 
