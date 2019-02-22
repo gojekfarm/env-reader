@@ -14,7 +14,7 @@ plugins {
 }
 
 group 'com.gojek'
-version '0.2.3'
+version '0.2.4'
 
 dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
@@ -24,11 +24,13 @@ dependencies {
 
 buildscript.repositories.each { repositories.add(it) }
 
-task javadocJar(type: Jar) {
-    from javadoc
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
 }
 
-task sourcesJar(type: Jar) {
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
     from sourceSets.main.allSource
 }
 
