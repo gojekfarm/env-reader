@@ -14,7 +14,7 @@ plugins {
 }
 
 group 'com.gojek'
-version '0.2.5'
+version '0.2.6'
 
 dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
@@ -24,17 +24,19 @@ dependencies {
 
 buildscript.repositories.each { repositories.add(it) }
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    from sourceSets.main.allSource
-}
-
 artifacts {
-    archives javadocJar, sourcesJar
+    archives sourcesJar
+    archives javadocJar
 }
 
 def ossrhUsername = project.hasProperty('ossrhUsername') ? project.property('ossrhUsername') : ''
